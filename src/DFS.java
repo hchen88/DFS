@@ -185,8 +185,7 @@ public class DFS
     
     public DFS(int port) throws Exception
     {
-        
-        
+
         this.port = port;
         long guid = md5("" + port);
         chord = new Chord(port, guid);
@@ -199,8 +198,7 @@ public class DFS
         });
         
     }
-    
-  
+
 /**
  * Join the chord
   *
@@ -389,7 +387,6 @@ public class DFS
             fileToDelete.pages.clear();;
             files.removeFile(fileToDelete.getName());
             writeMetaData(files);
-
         }else{
             System.out.println("Filename is incorrect!");
         }
@@ -444,5 +441,24 @@ public class DFS
         }
     }
 
+    public void write(String fileName, int pageNumber, RemoteInputFileStream data) throws Exception
+    {
+        FileJson fileToWrite = null;
+        FilesJson files = readMetaData();
+        for( FileJson file : files.file) {
+            if(file.getName().equals(fileName)){
+                fileToWrite = file;
+            }
+        }
+
+        Long chunkGuid  = md5(fileName + fileToWrite.pages.size() + 1);
+        PagesJson pageToAdd = new PagesJson(chunkGuid, (long)1000);
+        ChordMessageInterface successor = chord.locateSuccessor(chunkGuid);
+        successor.put(chunkGuid, data);
+        fileToWrite.pages.add(pageNumber, pageToAdd);
+        writeMetaData(files);
+        System.out.println(chunkGuid + " inserted into " + pageNumber + "th spot.");
+
+    }
 
 }

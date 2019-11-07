@@ -65,6 +65,7 @@ public class DFSCommand
             if(result[0].equals("read")){
                 dfs.read(result[1], Integer.parseInt(result[2]));
             }
+
         }
             // User interface:
             // X join,  X ls,  X touch, X delete, read -return remoteInputFileStream as object, tail- last page, head - first page, X append, move
