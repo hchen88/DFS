@@ -451,7 +451,7 @@ public class DFS
             }
         }
 
-        Long chunkGuid  = md5(fileName + fileToWrite.pages.size() + 1);
+        Long chunkGuid  = md5(fileName + fileToWrite.pages.size());
         PagesJson pageToAdd = new PagesJson(chunkGuid, (long)1000);
         ChordMessageInterface successor = chord.locateSuccessor(chunkGuid);
         successor.put(chunkGuid, data);
