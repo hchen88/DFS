@@ -413,6 +413,7 @@ public class DFS
         }
         Long chunkGuid = fileToRead.pages.get(pageNumber).getGuid();
         ChordMessageInterface successor = chord.locateSuccessor(chunkGuid);
+        System.out.println("Page Guid:" + chunkGuid + " read.");
         return successor.get(chunkGuid);
     }
     
