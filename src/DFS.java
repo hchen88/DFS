@@ -133,16 +133,29 @@ public class DFS
          List<FileJson> file;
          public FilesJson() 
          {
-             List<FileJson> file = new ArrayList<FileJson>();
+             file = new ArrayList<FileJson>();
          }
 
          public FilesJson(FileJson fileJson) {
-             this.file = new ArrayList<FileJson>();
+             file = new ArrayList<FileJson>();
              file.add(fileJson);
          }
 
+         public void addFile(FileJson fileJson){
+             file.add(fileJson);
+
+         }
         // getters
         // setters
+        public void removeFile(String name){
+             int indexToDelete = 0;
+             for(int i = 0; i < file.size(); i++){
+                 if(file.get(i).getName().equals(name)){
+                     indexToDelete = i;
+                 }
+             }
+             file.remove(indexToDelete);
+        }
     };
     
     
@@ -264,7 +277,39 @@ public class DFS
     public void move(String oldName, String newName) throws Exception
     {
         // TODO:  Change the name in Metadata
-        // Write Metadata
+        FileJson fileToMove = null;
+        FileJson finalFile = null;
+        create(newName);
+        boolean fileFound = false;
+        FilesJson files = readMetaData(); //gets copy of files Json object
+        for( FileJson file : files.file) {
+            if(file.getName().equals(oldName)){
+                fileToMove = file;
+                fileFound = true;
+            }else if(file.getName().equals(newName)) {
+                finalFile = file;
+            }
+        }
+
+        if(fileFound){
+
+            for(int i = 0; i < fileToMove.pages.size(); i++){
+                Long chunkGuid = fileToMove.pages.get(i).guid;
+                ChordMessageInterface successor = chord.locateSuccessor(chunkGuid);
+                RemoteInputFileStream chunkCopy = successor.get(chunkGuid);
+                append(newName, chunkCopy); // implement same function for append to get away from read/writes.
+                writeMetaData(files);
+                files = readMetaData();
+                successor.delete(chunkGuid);
+            }
+            files = readMetaData();
+            files.removeFile(oldName);
+            fileToMove.pages.clear();
+            writeMetaData(files);
+            System.out.println(oldName + "renamed to " + newName);
+        }else{
+            System.out.println("Filename is incorrect!");
+        }
 
     }
 
@@ -294,13 +339,25 @@ public class DFS
  */
     public void create(String fileName) throws Exception
     {
-         // TODO: Create the file fileName by adding a new entry to the Metadata
+        //TODO: Create the file fileName by adding a new entry to the Metadata
+        FilesJson files = readMetaData();
         FileJson fileJson = new FileJson(fileName);
-        FilesJson filesJson = new FilesJson(fileJson);
+
+        if(files.file == null) {
+            FilesJson filesJson = new FilesJson(fileJson);
+            writeMetaData(filesJson);
+
+        } else{
+            if(files.file.size() == 0) {
+                files = new FilesJson(fileJson);
+            }else {
+                files.addFile(fileJson);
+            }
+        }
 
         // Write Metadata
-        writeMetaData(filesJson);
-        System.out.println("Created File");
+        writeMetaData(files);
+        System.out.println("file created");
 
     }
     
@@ -316,7 +373,6 @@ public class DFS
         boolean fileFound = false;
         FilesJson files = readMetaData(); //gets copy of files Json object
         for( FileJson file : files.file) {
-            System.out.println(file.getName());
             if(file.getName().equals(fileName)){
                 fileToDelete = file;
                 fileFound = true;
@@ -331,7 +387,7 @@ public class DFS
                 System.out.println(chunkGuid +" physically deleted!");
             }
             fileToDelete.pages.clear();;
-            files.file.clear();
+            files.removeFile(fileToDelete.getName());
             writeMetaData(files);
 
         }else{
@@ -348,7 +404,16 @@ public class DFS
  */
     public RemoteInputFileStream read(String fileName, int pageNumber) throws Exception
     {
-        return null;
+        FileJson fileToRead = null;
+        FilesJson files = readMetaData();
+        for( FileJson file : files.file) {
+            if(file.getName().equals(fileName)){
+                fileToRead = file;
+            }
+        }
+        Long chunkGuid = fileToRead.pages.get(pageNumber).getGuid();
+        ChordMessageInterface successor = chord.locateSuccessor(chunkGuid);
+        return successor.get(chunkGuid);
     }
     
  /**
@@ -377,5 +442,6 @@ public class DFS
             System.out.println(filePageGuid + " added to dfs!");
         }
     }
-    
+
+
 }

@@ -57,10 +57,18 @@ public class DFSCommand
                 dfs.delete(result[1]);
 
             }
-            line=buffer.readLine();  
+            if(result[0].equals("move")) {
+                dfs.move(result[1], result[2]);
+            }
+            line=buffer.readLine();
+
+            if(result[0].equals("read")){
+                dfs.read(result[1], Integer.parseInt(result[2]));
+            }
         }
             // User interface:
-            // join, ls, touch, delete, read, tail, head, append, move
+            // X join,  X ls,  X touch, X delete, read -return remoteInputFileStream as object, tail- last page, head - first page, X append, move
+
     }
     
     static public void main(String args[]) throws Exception
