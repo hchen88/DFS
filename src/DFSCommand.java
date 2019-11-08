@@ -34,8 +34,17 @@ public class DFSCommand
                 SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy h:mm:ss a");
                 String formattedDate = sdf.format(date);
                 System.out.println(formattedDate); // 12/01/2011 4:48:16 PM
+            }
+
+            if(result[0].equals("commands")) {
+                System.out.print("ls - list of files\nprint - prints successor, predecessor, and fingers\njoin" +
+                        " <portNumber> - joins ports\nleave - leave chord ring\ncreate <fileName> - creates empty file" +
+                        " with no pages\nappend <fileName> <fileLocation> - adds pages/chunks to file\ndelete" +
+                        " <fileName>- deletes file(including all pages associated)\nmove <oldFilename> <newFilename> -" +
+                        " \nread - <fileName> <pageNumber> - reads page\nwrite - <fileName> <pageNumber> -writes page\n");
 
             }
+
             if (result[0].equals("join")  && result.length > 1)
             {
                 dfs.join("127.0.0.1", Integer.parseInt(result[1]));     

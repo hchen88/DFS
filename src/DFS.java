@@ -300,8 +300,8 @@ public class DFS
             }
         }
         fileToMove.setName(newName);
-
         writeMetaData(files);
+        System.out.println("Changed filename from " + "oldName to " + newName);
 
         /**
         FileJson fileToMove = null;
