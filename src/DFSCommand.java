@@ -1,11 +1,14 @@
 
 import java.io.*;
 import java.rmi.Remote;
+import java.security.Timestamp;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import com.google.gson.*;
 import com.google.gson.stream.*;
 
-
+import java.time.Instant;
 
 
 public class DFSCommand
@@ -26,6 +29,13 @@ public class DFSCommand
         while (!line.equals("quit"))
         {
             String[] result = line.split("\\s");
+            if(result[0].equals("timestamp")) {
+                Date date = new Date();
+                SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy h:mm:ss a");
+                String formattedDate = sdf.format(date);
+                System.out.println(formattedDate); // 12/01/2011 4:48:16 PM
+
+            }
             if (result[0].equals("join")  && result.length > 1)
             {
                 dfs.join("127.0.0.1", Integer.parseInt(result[1]));     

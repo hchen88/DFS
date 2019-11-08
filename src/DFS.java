@@ -1,5 +1,6 @@
 import java.rmi.*;
 import java.net.*;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.io.*;
 import java.nio.file.*;
@@ -7,7 +8,6 @@ import java.math.BigInteger;
 import java.security.*;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-
 import java.io.InputStream;
 import java.util.*;
 
@@ -43,10 +43,16 @@ public class DFS
     {
         Long guid;
         Long size;
+        String writeTS;
+        String readTS;
         public PagesJson(Long guid, Long size)
         {
+
             this.guid = guid;
             this.size = size;
+            this.writeTS = getTimeStamp();
+            this.readTS = getTimeStamp();
+
         }
         // getters
 
@@ -99,7 +105,7 @@ public class DFS
             return this.size;
         }
 
-
+        public ArrayList<PagesJson> getPagesList() {return this.pages;}
 
         // setters
         public void setName(String name) {
@@ -109,6 +115,8 @@ public class DFS
         public void setSize(Long size) {
             this.size = size;
         }
+
+        public void setPages(ArrayList<PagesJson> pages) { this.pages = pages;}
 
         public void appendPage(PagesJson page){
             pages.add(page);
@@ -146,7 +154,16 @@ public class DFS
 
          }
         // getters
+
+        public List<FileJson> getFileList(){
+             return file;
+        }
+
         // setters
+        public void setFileList(List<FileJson> list){
+            this.file = list;
+        }
+
         public void removeFile(String name){
              int indexToDelete = 0;
              for(int i = 0; i < file.size(); i++){
@@ -276,6 +293,18 @@ public class DFS
     {
         // TODO:  Change the name in Metadata
         FileJson fileToMove = null;
+        FilesJson files = readMetaData();
+        for( FileJson file : files.file) {
+            if(file.getName().equals(oldName)){
+                fileToMove = file;
+            }
+        }
+        fileToMove.setName(newName);
+
+        writeMetaData(files);
+
+        /**
+        FileJson fileToMove = null;
         FileJson finalFile = null;
         create(newName);
         boolean fileFound = false;
@@ -308,9 +337,9 @@ public class DFS
         }else{
             System.out.println("Filename is incorrect!");
         }
+         **/
 
     }
-
   
 /**
  * List the files in the system
@@ -384,7 +413,7 @@ public class DFS
                 successor.delete(chunkGuid);
                 System.out.println(chunkGuid +" physically deleted!");
             }
-            fileToDelete.pages.clear();;
+            fileToDelete.pages.clear();
             files.removeFile(fileToDelete.getName());
             writeMetaData(files);
         }else{
@@ -410,6 +439,8 @@ public class DFS
         }
         Long chunkGuid = fileToRead.pages.get(pageNumber).getGuid();
         ChordMessageInterface successor = chord.locateSuccessor(chunkGuid);
+        fileToRead.pages.get(pageNumber).readTS = getTimeStamp();;
+        writeMetaData(files);
         System.out.println("Page Guid:" + chunkGuid + " read.");
         return successor.get(chunkGuid);
     }
@@ -432,11 +463,14 @@ public class DFS
 
         Long filePageGuid = md5(fileName + Integer.toString(fileToAppend.pages.size()));
         PagesJson page = new PagesJson(filePageGuid, (long)1000);
+
         if(!fileToAppend.checkPage(filePageGuid)) {
-            fileToAppend.appendPage(page);
-            writeMetaData(files);
             ChordMessageInterface successor = chord.locateSuccessor(filePageGuid);
             successor.put(filePageGuid, data);
+            page.writeTS = getTimeStamp();
+            fileToAppend.appendPage(page);
+            writeMetaData(files);
+
             System.out.println(filePageGuid + " added to dfs!");
         }
     }
@@ -455,10 +489,17 @@ public class DFS
         PagesJson pageToAdd = new PagesJson(chunkGuid, (long)1000);
         ChordMessageInterface successor = chord.locateSuccessor(chunkGuid);
         successor.put(chunkGuid, data);
+        pageToAdd.writeTS = getTimeStamp();
         fileToWrite.pages.add(pageNumber, pageToAdd);
         writeMetaData(files);
         System.out.println(chunkGuid + " inserted into " + pageNumber + "th spot.");
 
+    }
+
+    public String getTimeStamp(){
+        Date date = new Date();
+        SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy h:mm:ss a");
+        return sdf.format(date); // 12/01/2011 4:48:16 PM
     }
 
 }
