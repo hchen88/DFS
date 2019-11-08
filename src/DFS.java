@@ -255,15 +255,12 @@ public class DFS
         try {
             Gson gson = new Gson();
             long guid = md5("Metadata");
-
-           // System.out.println("GUID " + guid);
             ChordMessageInterface peer = chord.locateSuccessor(guid);
             RemoteInputFileStream metadataraw = peer.get(guid);
             metadataraw.connect();
             Scanner scan = new Scanner(metadataraw);
             scan.useDelimiter("\\A");
             String strMetaData = scan.next();
-           // System.out.println(strMetaData);
             filesJson= gson.fromJson(strMetaData, FilesJson.class);
         } catch (Exception ex)
         {
@@ -291,7 +288,6 @@ public class DFS
  */
     public void move(String oldName, String newName) throws Exception
     {
-        // TODO:  Change the name in Metadata
         FileJson fileToMove = null;
         FilesJson files = readMetaData();
         for( FileJson file : files.file) {
@@ -302,42 +298,6 @@ public class DFS
         fileToMove.setName(newName);
         writeMetaData(files);
         System.out.println("Changed filename from " + "oldName to " + newName);
-
-        /**
-        FileJson fileToMove = null;
-        FileJson finalFile = null;
-        create(newName);
-        boolean fileFound = false;
-        FilesJson files = readMetaData(); //gets copy of files Json object
-        for( FileJson file : files.file) {
-            if(file.getName().equals(oldName)){
-                fileToMove = file;
-                fileFound = true;
-            }else if(file.getName().equals(newName)) {
-                finalFile = file;
-            }
-        }
-
-        if(fileFound){
-
-            for(int i = 0; i < fileToMove.pages.size(); i++){
-                Long chunkGuid = fileToMove.pages.get(i).guid;
-                ChordMessageInterface successor = chord.locateSuccessor(chunkGuid);
-                RemoteInputFileStream chunkCopy = successor.get(chunkGuid);
-                append(newName, chunkCopy); // implement same function for append to get away from read/writes.
-                writeMetaData(files);
-                files = readMetaData();
-                successor.delete(chunkGuid);
-            }
-            files = readMetaData();
-            files.removeFile(oldName);
-            fileToMove.pages.clear();
-            writeMetaData(files);
-            System.out.println(oldName + "renamed to " + newName);
-        }else{
-            System.out.println("Filename is incorrect!");
-        }
-         **/
 
     }
   
@@ -366,7 +326,6 @@ public class DFS
  */
     public void create(String fileName) throws Exception
     {
-        //TODO: Create the file fileName by adding a new entry to the Metadata
         FilesJson files = readMetaData();
         FileJson fileJson = new FileJson(fileName);
 
@@ -395,7 +354,6 @@ public class DFS
  */
     public void delete(String fileName) throws Exception
     {
-        // TODO: deletions
         FileJson fileToDelete = null;
         boolean fileFound = false;
         FilesJson files = readMetaData(); //gets copy of files Json object

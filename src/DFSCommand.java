@@ -86,8 +86,6 @@ public class DFSCommand
             }
 
         }
-            // User interface:
-            // X join,  X ls,  X touch, X delete, read -return remoteInputFileStream as object, tail- last page, head - first page, X append, move
 
     }
     
