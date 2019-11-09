@@ -1,3 +1,4 @@
+//package server.DFS;
 import java.rmi.*;
 import java.net.*;
 import java.text.SimpleDateFormat;
@@ -10,6 +11,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import java.io.InputStream;
 import java.util.*;
+import server.comm.UDPServer;
 
 
 /* JSON Format
@@ -213,6 +215,10 @@ public class DFS
                 chord.leave();
             }
         });
+       if(port == 2000) {
+        	UDPServer server = new UDPServer(this);
+        	server.start();
+        }
         
     }
 
