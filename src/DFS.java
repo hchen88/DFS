@@ -157,7 +157,7 @@ public class DFS
          }
         // getters
 
-        public List<FileJson> getFileList(){
+        public List<FileJson> getFile(){
              return file;
         }
 
@@ -250,7 +250,10 @@ public class DFS
     {
         chord.print();
     }
-    
+    public Chord getChord()
+    {
+      return chord;
+    }
 /**
  * readMetaData read the metadata from the chord
   *
