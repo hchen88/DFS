@@ -45,7 +45,6 @@ public class DFS
 //        Long guid;
         ArrayList<Long> guidList = null;
         Long size;
-        ArrayList<Long> duplicationList = null;
 
         public PagesJson(Long pageGuid, Long size)
         {
@@ -55,7 +54,7 @@ public class DFS
 
         }
         // getters
-        public ArrayList<Long> guidList(){return this.guidList;
+        public ArrayList<Long> getGuidList(){return this.guidList; }
 
         public Long getSize() {
             return this.size;
@@ -125,7 +124,7 @@ public class DFS
         public Boolean checkPage(Long guid) {
             Iterator<PagesJson> iterator = pages.iterator();
             while(iterator.hasNext()){
-                if(iterator.next().guid == guid) {
+                if(iterator.next().guidList.get(0) == guid) {
                     return true;
                 }
             }
@@ -316,7 +315,12 @@ public class DFS
         for(int i = 0; i < fileJson.file.size(); i++){
             System.out.println("FileName: " + fileJson.file.get(i).getName());
             for(int j = 0; j < fileJson.file.get(i).pages.size(); j++){
-                System.out.println("Page " + (j+1) + ": " + fileJson.file.get(i).pages.get(j).guid);
+                System.out.println("Page " + (j+1) + ": " + fileJson.file.get(i).pages.get(j).guidList.get(0));
+                if(fileJson.file.get(i).pages.get(j).getGuidList().size() > 1) {
+                    for (int l = 1; l < fileJson.file.get(i).pages.get(j).getGuidList().size(); l++) {
+                        System.out.println("Page Guids: " + (fileJson.file.get(i).pages.get(j).getGuidList().get(l)));
+                    }
+                }
             }
         }
  
@@ -370,12 +374,14 @@ public class DFS
 
         if(fileFound){
             for(int i = 0; i < fileToDelete.pages.size(); i++){
-                Long chunkGuid = fileToDelete.pages.get(i).guid;
-                ChordMessageInterface successor = chord.locateSuccessor(chunkGuid);
-                successor.delete(chunkGuid);
-                System.out.println(chunkGuid +" physically deleted!");
-                fileToDelete.pages.get(i).duplicationList.clear();
-                System.out.println("Duplications of " + chunkGuid +" physically deleted!");
+                for ( int j = 0; j < fileToDelete.pages.get(i).guidList.size(); j++)
+                {
+                    Long chunkGuid = fileToDelete.pages.get(i).guidList.get(j);
+                    ChordMessageInterface successor = chord.locateSuccessor(chunkGuid);
+                    successor.delete(chunkGuid);
+                    System.out.println(chunkGuid +" physically deleted!");
+                }
+                fileToDelete.pages.get(i).guidList.clear();
             }
             fileToDelete.pages.clear();
             System.out.println(fileToDelete.getName() +" deleted!");
@@ -403,7 +409,7 @@ public class DFS
                 fileToRead = file;
             }
         }
-        Long chunkGuid = fileToRead.pages.get(pageNumber).getGuid();
+        Long chunkGuid = fileToRead.pages.get(pageNumber).guidList.get(0);
         ChordMessageInterface successor = chord.locateSuccessor(chunkGuid);
         System.out.println("Page Guid:" + chunkGuid + " read.");
         return successor.get(chunkGuid);
@@ -447,22 +453,23 @@ public class DFS
             }
         }
 
-        Long filePageGuid = fileToDup.getPages().get(pageNumber).getGuid();
+        Long filePageGuid = fileToDup.getPages().get(pageNumber).getGuidList().get(0);
         ChordMessageInterface successor = chord.locateSuccessor(filePageGuid);
         Long directory = successor.getId();
-        duplicationList = fileToDup.getPages().get(pageNumber).getDuplicationList();
+        duplicationList = fileToDup.getPages().get(pageNumber).guidList;
 
         //duplicating 3 times
-        for(int i = 0; i < 3 ; i++) {
+        for(int i = 0; i < 2; i++) {
             data = new RemoteInputFileStream(directory+"/repository/" + filePageGuid);
             Long duplicationGuid = md5(fileName + "Dupe" + i);
-            PagesJson page = new PagesJson(duplicationGuid, (long)1000);
-            fileToDup.appendPage(page);
             successor = chord.locateSuccessor(duplicationGuid);
             successor.put(duplicationGuid, data);
+            duplicationList.add(duplicationGuid);
             //need to add it to meta data.
-            System.out.println(filePageGuid + " duplicated to dfs!");
+            System.out.println(filePageGuid + " duplicated to dfs with Guid: " + duplicationGuid + "!");
         }
+
+        writeMetaData(files);
 
     }
 
