@@ -11,6 +11,7 @@ public interface ChordMessageInterface extends Remote
     public void notify(ChordMessageInterface j) throws RemoteException;
     public boolean isAlive() throws RemoteException;
     public long getId() throws RemoteException;
+    //public String search(long guid, String keyword) throws RemoteException; //create remote method that searches and combines a file
     
     
     public void put(long guidObject, RemoteInputFileStream inputStream) throws IOException, RemoteException;

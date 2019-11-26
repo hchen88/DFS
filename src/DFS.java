@@ -1,7 +1,5 @@
-//package server.DFS;
 import java.rmi.*;
 import java.net.*;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.io.*;
 import java.nio.file.*;
@@ -9,9 +7,11 @@ import java.math.BigInteger;
 import java.security.*;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+
+//import server.comm.UDPServer;
+
 import java.io.InputStream;
 import java.util.*;
-import server.comm.UDPServer;
 
 
 /* JSON Format
@@ -39,28 +39,23 @@ import server.comm.UDPServer;
 
 public class DFS
 {
-    
 
     public class PagesJson
     {
-        Long guid;
+//        Long guid;
+        ArrayList<Long> guidList = null;
         Long size;
-        String writeTS;
-        String readTS;
-        public PagesJson(Long guid, Long size)
-        {
+        ArrayList<Long> duplicationList = null;
 
-            this.guid = guid;
+        public PagesJson(Long pageGuid, Long size)
+        {
+            this.guidList = new ArrayList<Long>();
+            guidList.add(pageGuid);
             this.size = size;
-            this.writeTS = getTimeStamp();
-            this.readTS = getTimeStamp();
 
         }
         // getters
-
-        public Long getGuid(){
-            return this.guid;
-        }
+        public ArrayList<Long> guidList(){return this.guidList;
 
         public Long getSize() {
             return this.size;
@@ -69,13 +64,14 @@ public class DFS
 
 
         // setters
-        public void setGuid(Long guid) {
-            this.guid = guid;
+        public void setGuidList(ArrayList<Long> guidList) {
+            this.guidList = guidList;
         }
 
         public void setSize(Long size) {
             this.size = size;
         }
+
     };
 
     public class FileJson 
@@ -106,8 +102,11 @@ public class DFS
         public Long getSize() {
             return this.size;
         }
+        public ArrayList<PagesJson> getPages()
+        {
+        	return this.pages;
+        }
 
-        public ArrayList<PagesJson> getPagesList() {return this.pages;}
 
         // setters
         public void setName(String name) {
@@ -117,8 +116,6 @@ public class DFS
         public void setSize(Long size) {
             this.size = size;
         }
-
-        public void setPages(ArrayList<PagesJson> pages) { this.pages = pages;}
 
         public void appendPage(PagesJson page){
             pages.add(page);
@@ -156,16 +153,11 @@ public class DFS
 
          }
         // getters
-
-        public List<FileJson> getFile(){
-             return file;
-        }
-
+         public List<FileJson> getFile()
+         {
+        	 return file;
+         }
         // setters
-        public void setFileList(List<FileJson> list){
-            this.file = list;
-        }
-
         public void removeFile(String name){
              int indexToDelete = 0;
              for(int i = 0; i < file.size(); i++){
@@ -204,7 +196,6 @@ public class DFS
     
     public DFS(int port) throws Exception
     {
-
         this.port = port;
         long guid = md5("" + port);
         chord = new Chord(port, guid);
@@ -215,11 +206,10 @@ public class DFS
                 chord.leave();
             }
         });
-       if(port == 2000) {
-        	UDPServer server = new UDPServer(this);
-        	server.start();
-        }
-        
+//        if(port == 2000) {
+//        	UDPServer server = new UDPServer(this);
+//        	server.start();
+//        }
     }
 
 /**
@@ -250,9 +240,10 @@ public class DFS
     {
         chord.print();
     }
+    
     public Chord getChord()
     {
-      return chord;
+    	return chord;
     }
 /**
  * readMetaData read the metadata from the chord
@@ -264,12 +255,15 @@ public class DFS
         try {
             Gson gson = new Gson();
             long guid = md5("Metadata");
+
+           // System.out.println("GUID " + guid);
             ChordMessageInterface peer = chord.locateSuccessor(guid);
             RemoteInputFileStream metadataraw = peer.get(guid);
             metadataraw.connect();
             Scanner scan = new Scanner(metadataraw);
             scan.useDelimiter("\\A");
             String strMetaData = scan.next();
+           // System.out.println(strMetaData);
             filesJson= gson.fromJson(strMetaData, FilesJson.class);
         } catch (Exception ex)
         {
@@ -306,9 +300,10 @@ public class DFS
         }
         fileToMove.setName(newName);
         writeMetaData(files);
-        System.out.println("Changed filename from " + "oldName to " + newName);
+        System.out.println("Changed filename from " + oldName + " to " + newName);
 
     }
+
   
 /**
  * List the files in the system
@@ -321,7 +316,7 @@ public class DFS
         for(int i = 0; i < fileJson.file.size(); i++){
             System.out.println("FileName: " + fileJson.file.get(i).getName());
             for(int j = 0; j < fileJson.file.get(i).pages.size(); j++){
-                System.out.println("Pages: " + fileJson.file.get(i).pages.get(j).guid);
+                System.out.println("Page " + (j+1) + ": " + fileJson.file.get(i).pages.get(j).guid);
             }
         }
  
@@ -352,7 +347,7 @@ public class DFS
 
         // Write Metadata
         writeMetaData(files);
-        System.out.println("file created");
+        System.out.println(fileName + " created");
 
     }
     
@@ -379,10 +374,14 @@ public class DFS
                 ChordMessageInterface successor = chord.locateSuccessor(chunkGuid);
                 successor.delete(chunkGuid);
                 System.out.println(chunkGuid +" physically deleted!");
+                fileToDelete.pages.get(i).duplicationList.clear();
+                System.out.println("Duplications of " + chunkGuid +" physically deleted!");
             }
             fileToDelete.pages.clear();
+            System.out.println(fileToDelete.getName() +" deleted!");
             files.removeFile(fileToDelete.getName());
             writeMetaData(files);
+
         }else{
             System.out.println("Filename is incorrect!");
         }
@@ -406,8 +405,6 @@ public class DFS
         }
         Long chunkGuid = fileToRead.pages.get(pageNumber).getGuid();
         ChordMessageInterface successor = chord.locateSuccessor(chunkGuid);
-        fileToRead.pages.get(pageNumber).readTS = getTimeStamp();;
-        writeMetaData(files);
         System.out.println("Page Guid:" + chunkGuid + " read.");
         return successor.get(chunkGuid);
     }
@@ -430,43 +427,44 @@ public class DFS
 
         Long filePageGuid = md5(fileName + Integer.toString(fileToAppend.pages.size()));
         PagesJson page = new PagesJson(filePageGuid, (long)1000);
-
         if(!fileToAppend.checkPage(filePageGuid)) {
-            ChordMessageInterface successor = chord.locateSuccessor(filePageGuid);
-            successor.put(filePageGuid, data);
-            page.writeTS = getTimeStamp();
             fileToAppend.appendPage(page);
             writeMetaData(files);
-
+            ChordMessageInterface successor = chord.locateSuccessor(filePageGuid);
+            successor.put(filePageGuid, data);
             System.out.println(filePageGuid + " added to dfs!");
         }
     }
 
-    public void write(String fileName, int pageNumber, RemoteInputFileStream data) throws Exception
-    {
-        FileJson fileToWrite = null;
-        FilesJson files = readMetaData();
+    public void duplicate(String fileName, int pageNumber) throws Exception {
+        FileJson fileToDup = null;
+        RemoteInputFileStream data = null;
+        ArrayList<Long> duplicationList = null;
+        FilesJson files = readMetaData(); //gets copy of files Json object
         for( FileJson file : files.file) {
             if(file.getName().equals(fileName)){
-                fileToWrite = file;
+                fileToDup = file;
             }
         }
 
-        Long chunkGuid  = md5(fileName + fileToWrite.pages.size());
-        PagesJson pageToAdd = new PagesJson(chunkGuid, (long)1000);
-        ChordMessageInterface successor = chord.locateSuccessor(chunkGuid);
-        successor.put(chunkGuid, data);
-        pageToAdd.writeTS = getTimeStamp();
-        fileToWrite.pages.add(pageNumber, pageToAdd);
-        writeMetaData(files);
-        System.out.println(chunkGuid + " inserted into " + pageNumber + "th spot.");
+        Long filePageGuid = fileToDup.getPages().get(pageNumber).getGuid();
+        ChordMessageInterface successor = chord.locateSuccessor(filePageGuid);
+        Long directory = successor.getId();
+        duplicationList = fileToDup.getPages().get(pageNumber).getDuplicationList();
+
+        //duplicating 3 times
+        for(int i = 0; i < 3 ; i++) {
+            data = new RemoteInputFileStream(directory+"/repository/" + filePageGuid);
+            Long duplicationGuid = md5(fileName + "Dupe" + i);
+            PagesJson page = new PagesJson(duplicationGuid, (long)1000);
+            fileToDup.appendPage(page);
+            successor = chord.locateSuccessor(duplicationGuid);
+            successor.put(duplicationGuid, data);
+            //need to add it to meta data.
+            System.out.println(filePageGuid + " duplicated to dfs!");
+        }
 
     }
 
-    public String getTimeStamp(){
-        Date date = new Date();
-        SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy h:mm:ss a");
-        return sdf.format(date); // 12/01/2011 4:48:16 PM
-    }
 
 }

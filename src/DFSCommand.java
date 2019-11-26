@@ -1,14 +1,10 @@
-
 import java.io.*;
 import java.rmi.Remote;
-import java.security.Timestamp;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 import com.google.gson.*;
 import com.google.gson.stream.*;
 
-import java.time.Instant;
+
 
 
 public class DFSCommand
@@ -29,22 +25,6 @@ public class DFSCommand
         while (!line.equals("quit"))
         {
             String[] result = line.split("\\s");
-            if(result[0].equals("timestamp")) {
-                Date date = new Date();
-                SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy h:mm:ss a");
-                String formattedDate = sdf.format(date);
-                System.out.println(formattedDate); // 12/01/2011 4:48:16 PM
-            }
-
-            if(result[0].equals("commands")) {
-                System.out.print("ls - list of files\nprint - prints successor, predecessor, and fingers\njoin" +
-                        " <portNumber> - joins ports\nleave - leave chord ring\ncreate <fileName> - creates empty file" +
-                        " with no pages\nappend <fileName> <fileLocation> - adds pages/chunks to file\ndelete" +
-                        " <fileName>- deletes file(including all pages associated)\nmove <oldFilename> <newFilename> -" +
-                        " \nread - <fileName> <pageNumber> - reads page\nwrite - <fileName> <pageNumber> -writes page\n");
-
-            }
-
             if (result[0].equals("join")  && result.length > 1)
             {
                 dfs.join("127.0.0.1", Integer.parseInt(result[1]));     
@@ -79,13 +59,26 @@ public class DFSCommand
             if(result[0].equals("move")) {
                 dfs.move(result[1], result[2]);
             }
-            line=buffer.readLine();
 
             if(result[0].equals("read")){
                 dfs.read(result[1], Integer.parseInt(result[2]));
             }
 
+            if(result[0].equals("path")){
+                File file = new File("path.txt");
+                System.out.println(file.getAbsolutePath());
+                file.delete();
+            }
+
+            if(result[0].equals("duplicate")){
+                dfs.duplicate(result[1], Integer.parseInt(result[2]));
+            }
+
+
+            line=buffer.readLine();
         }
+            // User interface:
+            // X join,  X ls,  X touch, X delete, read -return remoteInputFileStream as object, tail- last page, head - first page, X append, move
 
     }
     
