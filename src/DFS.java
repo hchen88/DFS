@@ -462,8 +462,8 @@ public class DFS
         for(int i = 0; i < 2; i++) {
             data = new RemoteInputFileStream(directory+"/repository/" + filePageGuid);
             Long duplicationGuid = md5(fileName + "Dupe" + i);
-            successor = chord.locateSuccessor(duplicationGuid);
-            successor.put(duplicationGuid, data);
+            ChordMessageInterface successor2 = chord.locateSuccessor(duplicationGuid);
+            successor2.put(duplicationGuid, data);
             duplicationList.add(duplicationGuid);
             //need to add it to meta data.
             System.out.println(filePageGuid + " duplicated to dfs with Guid: " + duplicationGuid + "!");
