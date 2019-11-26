@@ -442,6 +442,12 @@ public class DFS
         }
     }
 
+    /**
+     * this method duplicates file 2 times and appends Guid into the guid list.
+     * @param fileName - the filename as a string to duplicate
+     * @param pageNumber - the page number as an int to specify which page with duplicate
+     * @throws Exception
+     */
     public void duplicate(String fileName, int pageNumber) throws Exception {
         FileJson fileToDup = null;
         RemoteInputFileStream data = null;
@@ -468,9 +474,7 @@ public class DFS
             //need to add it to meta data.
             System.out.println(filePageGuid + " duplicated to dfs with Guid: " + duplicationGuid + "!");
         }
-
-        writeMetaData(files);
-
+        writeMetaData(files); //write back to MetaData
     }
 
 
